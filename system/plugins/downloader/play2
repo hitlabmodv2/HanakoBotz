@@ -1,0 +1,74 @@
+
+const axios = require('axios');
+
+let rinokumura = {
+    command: "play2",
+    alias: ["ply2"],
+    category: ["downloader"],
+    settings: {
+        limit: true
+    },
+    loading: true,
+    async run(m, {
+        sock,
+        client,
+        conn,
+        DekuGanz,
+        Func,
+        Scraper,
+        text,
+        config
+    }) {
+        if (!text) throw '⚠️ Mau Query Song Apa?'
+        try {
+            let response = await axios.get(`https://api.nekorinn.my.id/downloader/ytplay-savetube?q=${encodeURIComponent(text)}`);
+            let result = response.data.result;
+            
+            let metadata = `乂 *PLAY MUSIC*
+
+◦ *Title:* ${result.metadata.title}
+◦ *Channel:* ${result.metadata.channel}
+◦ *Duration:* ${result.metadata.duration}
+◦ *Link:* ${result.metadata.link}
+
+_Sedang mengirimkan audio..._`
+
+            const image = await Func.fetchBuffer(result.metadata.imageUrl)
+            await sock.sendMessage(m.cht, {
+                text: metadata,
+                contextInfo: {
+                    externalAdReply: {
+                        title: result.metadata.title,
+                        body: "Play Music",
+                        thumbnailUrl: result.metadata.imageUrl,
+                        sourceUrl: result.metadata.link,
+                        mediaType: 1,
+                        renderLargerThumbnail: true
+                    }
+                }
+            })
+            
+            await sock.sendMessage(m.cht, {
+                audio: {
+                    url: result.downloadUrl
+                },
+                mimetype: 'audio/mpeg',
+                contextInfo: {
+                    externalAdReply: {
+                        title: result.metadata.title,
+                        body: result.metadata.channel,
+                        mediaType: 1,
+                        thumbnailUrl: result.metadata.imageUrl,
+                        renderLargerThumbnail: false,
+                        sourceUrl: result.metadata.link
+                    }
+                }
+            })
+        } catch (error) {
+            console.error(error);
+            m.reply('❌ Terjadi kesalahan saat mengunduh musik');
+        }
+    }
+}
+
+module.exports = rinokumura
